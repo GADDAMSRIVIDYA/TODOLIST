@@ -1,89 +1,124 @@
+let todoItemsContainer = document.getElementById("todoItemsContainer");
+let addTodoButton = document.getElementById("addTodoButton");
+let saveTodoButton = document.getElementById("saveTodoButton");
 
-function getTodoListFromLoaclStorage(){
-    let stringifiedTodoList=localStorage.getItem("todoList");
-    let parsedTodoList=JSON.parse(stringifiedTodoList);
-    if (parsedTodoList===null){
+function getTodoListFromLocalStorage() {
+    let stringifiedTodoList = localStorage.getItem("todoList");
+    let parsedTodoList = JSON.parse(stringifiedTodoList);
+    if (parsedTodoList === null) {
         return [];
-    }
-    else{
+    } else {
         return parsedTodoList;
     }
 }
-let todoList=getTodoListFromLoaclStorage();
 
+let todoList = getTodoListFromLocalStorage();
+let todosCount = todoList.length;
 
+saveTodoButton.onclick = function() {
+    localStorage.setItem("todoList", JSON.stringify(todoList));
+};
 
+function onAddTodo() {
+    let userInputElement = document.getElementById("todoUserInput");
+    let userInputValue = userInputElement.value;
 
+    if (userInputValue === "") {
+        alert("Enter Valid Text");
+        return;
+    }
+    todosCount += 1;
+    let newTodo = {
+        text: userInputValue,
+        uniqueNo: todosCount,
+        isChecked: false
+    };
 
+    todoList.push(newTodo);
+    createAndAppendTodo(newTodo);
+    localStorage.setItem("todoList", JSON.stringify(todoList));
+    userInputElement.value = "";
+}
+
+addTodoButton.onclick = function() {
+    onAddTodo();
+};
+
+function onDeleteTodo(todoId) {
+    let todoElement = document.getElementById(todoId);
+    todoItemsContainer.removeChild(todoElement);
+
+    let deleteIndex = todoList.findIndex(function(eachTodo) {
+        let eachTodoId = 'todo' + eachTodo.uniqueNo;
+        return eachTodoId === todoId;
+    });
+
+    todoList.splice(deleteIndex, 1);
+    localStorage.setItem("todoList", JSON.stringify(todoList));
+}
+
+function onTodoStatusChange(checkboxId, labelId) {
+    let checkboxElement = document.getElementById(checkboxId);
+    let labelElement = document.getElementById(labelId);
+    labelElement.classList.toggle("checked");
+
+    let checkboxNumber = checkboxId.replace("checkbox", "");
+    let todoIndex = todoList.findIndex(function(todo) {
+        return todo.uniqueNo === parseInt(checkboxNumber);
+    });
+    if (todoIndex !== -1) {
+        todoList[todoIndex].isChecked = checkboxElement.checked;
+        localStorage.setItem("todoList", JSON.stringify(todoList));
+    }
+}
 
 function createAndAppendTodo(todo) {
-    let todoItemsContainer = document.getElementById("todoItemsContainer");
-    let todoElement = document.createElement("li");
-    todoItemsContainer.appendChild(todoElement);
-    todoElement.classList.add("todo-items-container", "d-flex", "flex-row", "mb-2");
+    let todoId = "todo" + todo.uniqueNo;
+    let checkboxId = "checkbox" + todo.uniqueNo;
+    let labelId = "label" + todo.uniqueNo;
 
+    let todoElement = document.createElement("li");
+    todoElement.classList.add("todo-item-container", "d-flex", "flex-row");
+    todoElement.id = todoId;
+    todoItemsContainer.appendChild(todoElement);
 
     let inputElement = document.createElement("input");
     inputElement.type = "checkbox";
-    let inputElementId = "inputElementId" + todo.uniqueId;
-    inputElement.id = inputElementId;
-
-    todoElement.appendChild(inputElement);
+    inputElement.id = checkboxId;
+    inputElement.checked = todo.isChecked;
     inputElement.classList.add("checkbox-input");
+    inputElement.onclick = function() {
+        onTodoStatusChange(checkboxId, labelId);
+    };
+    todoElement.appendChild(inputElement);
 
     let labelContainer = document.createElement("div");
     labelContainer.classList.add("label-container", "d-flex", "flex-row");
     todoElement.appendChild(labelContainer);
+
     let labelElement = document.createElement("label");
-
-    let labelId = "label" + todo.uniqueId;
+    labelElement.setAttribute("for", checkboxId);
     labelElement.id = labelId;
-    labelElement.textContent = todo.text;
-    labelElement.setAttribute("for", inputElementId);
-    labelContainer.appendChild(labelElement);
     labelElement.classList.add("checkbox-label");
+    labelElement.textContent = todo.text;
+    if (todo.isChecked === true) {
+        labelElement.classList.add("checked");
+    }
+    labelContainer.appendChild(labelElement);
 
-    let deleteContainer = document.createElement("div");
-    labelContainer.appendChild(deleteContainer);
+    let deleteIconContainer = document.createElement("div");
+    deleteIconContainer.classList.add("delete-icon-container");
+    labelContainer.appendChild(deleteIconContainer);
+
     let deleteIcon = document.createElement("i");
-    deleteContainer.appendChild(deleteIcon);
     deleteIcon.classList.add("far", "fa-trash-alt", "delete-icon");
-
-    deleteContainer.onclick = function() {
-        todoItemsContainer.removeChild(todoElement);
-    }
-    inputElement.onclick = function() {
-        labelElement.classList.toggle("strike-through");
-    }
+    deleteIcon.onclick = function() {
+        onDeleteTodo(todoId);
+    };
+    deleteIconContainer.appendChild(deleteIcon);
 }
 
+// Re-render all existing todos on load
 for (let todo of todoList) {
     createAndAppendTodo(todo);
 }
-
- let todosCount = todoList.length;
- let addTodoButton = document.getElementById("addTodoButton");
-    addTodoButton.onclick = function () {
-    let userInputElement = document.getElementById("todoUserInput");
-    let userInputValue = userInputElement.value;
-    
-    if (userInputValue === "") return;
-
-    todosCount += 1;
-
-    let newTodo = {
-        text: userInputValue,
-        uniqueId: todosCount
-    };
-
-   todoList.push(newTodo);
-    createAndAppendTodo(newTodo);
-    localStorage.setItem("todoList", JSON.stringify(todoList)); 
-    userInputElement.value = "";
-};
-
-let saveButton=document.getElementById("saveTodoButton");
-saveButton.onclick=function(){
-    localStorage.setItem("todoList",JSON.stringify(todoList));
-}
-
